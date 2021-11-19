@@ -170,7 +170,11 @@ df8<-df7 %>%
                                           "LONG BEACH"="LOS ANGELES"))
 unique(df8$local_health_jurisdiction)
 view(df8)
-
+df9 <- df8 %>%
+  group_by(local_health_jurisdiction)%>%
+  summarise_at(vars(vaccination_rate_percentage), list(mean_vx_prct = mean))%>%
+  rename(name=local_health_jurisdiction)
+view(df9)
 # From CA demographics, extract simpler table. Convert to tibble. Show file.
 df_ca_co_demog <- select(ca_county_demographics, name, pop2012, med_age)
 df_ca_co_demog <- as_tibble(df_ca_co_demog)
@@ -178,39 +182,14 @@ df_ca_co_demog$name = toupper(df_ca_co_demog$name)
 # arrange(df_ca_co_demog$name)
 df_ca_co_demog
 
+df10 <- inner_join(df9,df_ca_co_demog,by="name")
+view(df10)
+
 ```
 \newpage
 #### 3. Clean minimum of 2 variables for analysis
 ```{r}
 
-# Clean rows where county is NA. 
-# Correct these 3 wrong names: PASADENA – Los Angeles, BERKELEY - Alameda, LONG BEACH – Los Angeles
-# is.na() returns missing; !is.na() returns non-missing
-# filter(df4$local_health_jurisdiction, !is.na())
-# df5 <- filter(df4, local_health_jurisdiction !%in% c("NA")
-# df5 <- filter(df4, local_health_jurisdiction == "KERN" | local_health_jurisdiction == "KINGS" |)
-
-# Code above not working to clean "NA" rows, therefore brute force below to standardize counties across the two data sets.
-
-df5 <- filter(df4, local_health_jurisdiction %in% c("KERN", "KINGS", "LAKE", "LASSEN", "LOS ANGELES",
-                                                    "MADERA", "MARIN", "MARIPOSA", "MENDOCINO",
-                                                    "MERCED", "MODOC", "MONO", "MONTEREY", "NAPA",
-                                                    "NEVADA", "ORANGE", "PLACER", "PLUMAS",
-                                                    "RIVERSIDE", "SACRAMENTO", "SAN BENITO", 
-                                                    "SAN BERNARDINO", "SAN DIEGO", 
-                                                    "SAN FRANCISCO", "SAN JOAQUIN", 
-                                                    "SAN LUIS OBISPO", "SAN MATEO", 
-                                                    "SANTA BARBARA", "SANTA CLARA", "SANTA CRUZ",
-                                                    "SHASTA", "SIERRA", "SISKIYOU", "SOLANO",
-                                                    "ALAMEDA", "ALPINE", "SONOMA", "AMADOR",
-                                                    "STANISLAUS", "SUTTER", "BUTTE", "CALAVERAS",
-                                                    "TEHAMA", "COLUSA", "TRINITY", "TULARE",
-                                                    "CONTRA COSTA", "DEL NORTE", "TUOLUMNE",
-                                                    "VENTURA", "EL DORADO", "YOLO", "FRESNO",
-                                                    "GLENN", "YUBA", "HUMBOLDT","IMPERIAL",
-                                                    "INYO")) 
-
-view(df5)
 ```
 \newpage
 #### 4. Data dictionary based on clean dataset (minimum 4 data elements), including:
@@ -219,24 +198,13 @@ Data type
 Description
 ```{r}
 # https://cran.r-project.org/web/packages/dataMeta/vignettes/dataMeta_Vignette.html
-library(dataMeta)
-
-data(df_ca_co_demog)
-variable.names <- c("No.", "name", "pop2012", "med_age")
-var_desc <- c("County number", "County name", 
-             "Population (2012)", "Median age")
-var_type <- c(0, 1, 0, 0)
-                          
-linker <- build_linker(my.data = df_ca_co_demog, variable_description = var_desc, variable_type = var_type)
 
 ```
 \newpage
 #### 5. One or more tables with descriptive statistics for 4 data elements
 ```{r}
 #install.packages("arsenal")
-library(arsenal) 
-table_one <- tableby(name ~ med_age + pop2012, data = df_ca_co_demog) 
-summary(table_one, title = "Median Age by County and Population in 2012")
+
 ```
 ## Milestone 4
 Visualizations

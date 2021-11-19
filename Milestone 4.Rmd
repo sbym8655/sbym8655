@@ -13,17 +13,13 @@ library(lubridate)
 library(ggplot2)
 library(dplyr)
 
-#Import statements
-cov_vax_admin <- read_csv("cov_vax_admin.csv")
-ca_county_demographics <- read_csv("ca_county_demographics.csv")
-names(ca_county_demographics) [names(ca_county_demographics) == "X1"] <- "No."
-names(cov_vax_admin) [names(cov_vax_admin) == "X1"] <- "No."
-
-#Subset rows or columns as needed
-df <- cov_vax_admin %>%
-  filter(as_of_date == as.Date("2021-09-14"))%>%
-  select(zip_code_tabulation_area,local_health_jurisdiction,
-         age12_plus_population,persons_fully_vaccinated)
+#Import statements - I will use df10 which is cleaned from project.Rmd file
+data <- df10 %>%
+  rename(County=name)%>%
+  rename(Mean_Vaccination_Rate_Percentage=mean_vx_prct)%>%
+  rename(Population_2012=pop2012)%>%
+  rename(Median_Age=med_age)
+view(data)
 ```
 
 ## Milestone 4
@@ -50,30 +46,7 @@ Please make sure visual can stand-alone, meaning it includes enough information 
 Suggestion: Create joined table showing county, median age, and percentages of vaccinated persons.
 
 ```{r}
-# Convert county names to upper case to prepare for joining by case sensitive county names
-# Key: county
-df_ca_co_demog$county = toupper(df_ca_co_demog$name)
 
-# Remove extraneous columns that won't be in final table
-# Retain population as this might be used for visualization
-df_ca_co_medage <- select(df_ca_co_demog, -c(No., name))
-
-# Reorder columns to put county name first
-df_ca_co_medage <- df_ca_co_medage %>% relocate(county, .before = pop2012)
-
-# Rework vaccination dataframe to create a mean percentage of vaccinated persons by county
-# Subset data by creating mean percentage of vacccinated persons
-df9 <- df8 %>%
-  group_by(local_health_jurisdiction)%>%
-  summarise_at(vars(vaccination_rate_percentage), list(mean_vx_prct = mean))
-view(df9)
-# First output gives mean = na if even one cell is missing data.
-# Unsure why some percentages are NA even when it seems like the data is available to calculate
-# Inf is returned if dividing by zero. 
-
-# Join tables by County
-# Can't run until second table (df_vax_ready) is available, therefore commented out for now.
-# inner_join(df_ca_co_medage, df_vax_ready, by c("county" = "local_health_jurisdiction"))
 
 ```
 
