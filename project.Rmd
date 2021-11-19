@@ -1,0 +1,334 @@
+---
+title: "Team project"
+authors: Hansang Park
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Dataset Description
+
+#### Scenario 2 description: 
+Scenario 2: COVID Vaccination Updates in California
+You are part of a team who has been tasked with monitoring state level COVID-19 vaccination rates in the state of California. You have access to a *California Vaccine Progress Dashboard Data* that reports percentages of vaccinated persons by zip code. You have been tasked with organizing this data into county level observations and reporting them with a print quality data visualization. 
+It's understood that certain values have been redacted, or there may be other missing counts of vaccinated persons on the zipcode level. In those cases you've been asked to compute a county level average to replace the 'NA' values in the zipcode observations. 
+There's a concern going around that counties with younger median age values are less likely to have higher counts of vaccinated persons. You understand that it's difficult to investigate the question authoritatively at this time, but you decide to explore some CA census demographics to compare median age values and proportions of vaccinated persons together on a county level. You are looking for preliminary evidence of a *strong correlative relationship* between the two variables together, on a county level of observation, and the direction of that relationship, if any.
+Your task is to explore the Vaccine Progress Dashboard and locate the most recent vaccination data, including a percentage of fully vaccinated persons. If you find any missing values, you'll need to find a way to do *mean imputation* with the missing values on a zip code level, (substitute an average value to fill in the NAs values from the county level averages).  Next you'll need to summarise those imputed zipcode observations into a county level summary, averaging again, and create a print quality visualization that estimates a total proportion of vaccinated persons, by county, rounded to two places.
+Next you'll need to explore the California Demographics dataset and locate a median age statistic `med_age` and join that statistic with your vaccinated persons data. Once that is complete, plot a visualization that's able to explore potential correlations between median age and vaccinated person prevalence on a county level, if any.
+Data Sources:
+•	PHW251 Box folder (Links to an external site.)
+o	cov_vax_admin.csv (original source: https://data.ca.gov/dataset/covid-19-vaccine-progress-dashboard-data-by-zip-code (Links to an external site.))
+o	ca_county_demographics.csv (original source: https://raw.githubusercontent.com/Averysaurus/reproducable_examples-/main/ca_county_demographics.csv (Links to an external site.))
+
+=======
+## Import statement
+```{r loading dataset}
+cov_vax_admin <- read_csv("cov_vax_admin.csv")
+ca_county_demographics <- read_csv("ca_county_demographics.csv")
+names(ca_county_demographics) [names(ca_county_demographics) == "X1"] <- "No."
+names(cov_vax_admin) [names(cov_vax_admin) == "X1"] <- "No."
+view(cov_vax_admin)
+view(ca_county_demographics)
+str(cov_vax_admin)
+```
+# What is the data source? (1-2 sentences on where the data is coming from, dates included, etc.)
+One dataset is California county demographic information.
+Another dataset is Covid-19 vaccine administration in 2021.
+\newpage
+```{r}
+str(cov_vax_admin)
+```
+Gives summary of values within columns.
+Allows us to quickly identify date range for Cov vac as Jan 05 to Sep 14, 2021.
+\newpage
+```{r}
+summary(cov_vax_admin)
+```
+
+# How does the dataset relate to the group problem statement and question?
+Ans: The datasets provide information on total potential population (demographics) and Covid vaccination (exposure to treatment).
+
+## Identify data types for 5+ data elements/columns/variables
+as_of_date, zip_code_tabulation_area, local_health_jurisdiction, age12_plus_population,
+persons_fully_vaccinated, persons_partially_vaccinated
+```{r}
+class(cov_vax_admin$as_of_date)
+typeof(cov_vax_admin$as_of_date)
+class(cov_vax_admin$zip_code_tabulation_area)
+typeof(cov_vax_admin$zip_code_tabulation_area)
+class(cov_vax_admin$local_health_jurisdiction)
+typeof(cov_vax_admin$local_health_jurisdiction)
+class(cov_vax_admin$age12_plus_population)
+typeof(cov_vax_admin$age12_plus_population)
+# data type is "double"/numeric therefore no need to change data type
+class(cov_vax_admin$persons_fully_vaccinated)
+typeof(cov_vax_admin$persons_fully_vaccinated)
+# data type is "double"/numeric therefore no need to change data type
+class(cov_vax_admin$persons_partially_vaccinated)
+typeof(cov_vax_admin$persons_partially_vaccinated)
+# data type is "double"/numeric yet given that there are only whole integer numbers of persons we may 
+```
+\newpage
+## Provide a basic description of the 5+ data elements
+1. Numeric: mean, median, range
+2. Character:  unique values/categories
+3. Or any other descriptives that will be useful to the analysis
+```{r}
+summary(cov_vax_admin$as_of_date)
+range(cov_vax_admin$as_of_date)
+summary(cov_vax_admin$zip_code_tabulation_area)
+range(cov_vax_admin$zip_code_tabulation_area)
+summary(cov_vax_admin$local_health_jurisdiction)
+range(cov_vax_admin$local_health_jurisdiction)
+summary(cov_vax_admin$age12_plus_population)
+range(cov_vax_admin$age12_plus_population)
+summary(cov_vax_admin$persons_fully_vaccinated)
+range(cov_vax_admin$persons_fully_vaccinated)
+summary(cov_vax_admin$persons_partially_vaccinated)
+range(cov_vax_admin$persons_partially_vaccinated)
+```
+\newpage
+## Unique values/categories for date, zip code, and county
+```{r}
+unique(cov_vax_admin$as_of_date)
+unique(cov_vax_admin$zip_code_tabulation_area, nmax=NA)
+unique(cov_vax_admin$local_health_jurisdiction)
+```
+\newpage
+## Milestone 3
+#### 1. Subset rows or columns as needed
+```{r}
+# Seems like cleaning out the 'NA' values is needed more than subsetting
+# Subsetting by county may be necessary
+# We may only need the most recent data - we don't have to show the trend right? Using the most recent numbers, group by county to get county average vaccination counts.
+# Once we get the county average vaccination counts, put that number for the missing "NA"s, averaging rates again.
+df <- cov_vax_admin %>%
+  filter(as_of_date == as.Date("2021-09-14"))%>%
+  select(zip_code_tabulation_area,local_health_jurisdiction,
+         age12_plus_population,persons_fully_vaccinated)
+view(df)
+```
+\newpage
+#### 2. Create minimum of 2 new variables
+Calculating a rate
+Combining character strings 
+```{r}
+# From Scenario 2 summary:
+# Explore some CA census demographics to compare median age values and proportions of vaccinated persons together on a county level.
+# Compute a county level average to replace the 'NA' values in the zipcode observations
+df2 <- df%>%
+  mutate(age12_plus_population=if_else(age12_plus_population<=persons_fully_vaccinated,persons_fully_vaccinated,age12_plus_population))%>%
+  mutate(vaccination_rate = persons_fully_vaccinated/age12_plus_population)%>%
+  mutate(vaccination_rate_percentage = vaccination_rate*100)
+view(df2)
+df3 <- df2 %>%
+  group_by(local_health_jurisdiction)%>%
+  mutate(total_vaccinated_persons_by_county=sum(persons_fully_vaccinated,na.rm=TRUE))%>%
+  mutate(total_population_by_county=sum(age12_plus_population,na.rm=TRUE))%>%
+  ungroup()
+df4<-df3 %>%
+  mutate(persons_fully_vaccinated=if_else(is.na(persons_fully_vaccinated),age12_plus_population
+        *total_vaccinated_persons_by_county/total_population_by_county,
+        persons_fully_vaccinated)) %>%
+  group_by(local_health_jurisdiction)%>%
+  mutate(total_vaccinated_persons_by_county=sum(persons_fully_vaccinated,na.rm=TRUE))%>%
+  mutate(total_population_by_county=sum(age12_plus_population,na.rm=TRUE))%>%
+  ungroup()
+df5<-df4 %>%
+  mutate(vaccination_rate = persons_fully_vaccinated/age12_plus_population)%>%
+  mutate(vaccination_rate_percentage = vaccination_rate*100)
+view(df5)
+df6<-df5%>%
+  mutate(persons_fully_vaccinated=if_else(is.na(persons_fully_vaccinated),age12_plus_population*total_vaccinated_persons_by_county/total_population_by_county,persons_fully_vaccinated))
+# Select columns from Covid vaccination to prepare for joining with demographics table. 
+# Compute a county level average to replace the 'NA' values in the zipcode observations. Sort by county name. 
+df7 <- df6 %>%
+  mutate(total_vx_rate = total_vaccinated_persons_by_county / total_population_by_county)%>%
+  mutate(total_vx_rate_prcnt = total_vx_rate*100) %>%
+  arrange(df6$local_health_jurisdiction) %>%
+  drop_na(local_health_jurisdiction)%>%
+  drop_na(age12_plus_population)
+unique(df7$local_health_jurisdiction)
+df8<-df7 %>%
+  mutate(local_health_jurisdiction=recode(local_health_jurisdiction, "BERKELEY"="ALAMEDA",
+                                          "PASADENA"="LOS ANGELES",
+                                          "LONG BEACH"="LOS ANGELES"))
+unique(df8$local_health_jurisdiction)
+view(df8)
+
+# From CA demographics, extract simpler table. Convert to tibble. Show file.
+df_ca_co_demog <- select(ca_county_demographics, name, pop2012, med_age)
+df_ca_co_demog <- as_tibble(df_ca_co_demog)
+df_ca_co_demog$name = toupper(df_ca_co_demog$name)
+# arrange(df_ca_co_demog$name)
+df_ca_co_demog
+
+```
+\newpage
+#### 3. Clean minimum of 2 variables for analysis
+```{r}
+
+# Clean rows where county is NA. 
+# Correct these 3 wrong names: PASADENA – Los Angeles, BERKELEY - Alameda, LONG BEACH – Los Angeles
+# is.na() returns missing; !is.na() returns non-missing
+# filter(df4$local_health_jurisdiction, !is.na())
+# df5 <- filter(df4, local_health_jurisdiction !%in% c("NA")
+# df5 <- filter(df4, local_health_jurisdiction == "KERN" | local_health_jurisdiction == "KINGS" |)
+
+# Code above not working to clean "NA" rows, therefore brute force below to standardize counties across the two data sets.
+
+df5 <- filter(df4, local_health_jurisdiction %in% c("KERN", "KINGS", "LAKE", "LASSEN", "LOS ANGELES",
+                                                    "MADERA", "MARIN", "MARIPOSA", "MENDOCINO",
+                                                    "MERCED", "MODOC", "MONO", "MONTEREY", "NAPA",
+                                                    "NEVADA", "ORANGE", "PLACER", "PLUMAS",
+                                                    "RIVERSIDE", "SACRAMENTO", "SAN BENITO", 
+                                                    "SAN BERNARDINO", "SAN DIEGO", 
+                                                    "SAN FRANCISCO", "SAN JOAQUIN", 
+                                                    "SAN LUIS OBISPO", "SAN MATEO", 
+                                                    "SANTA BARBARA", "SANTA CLARA", "SANTA CRUZ",
+                                                    "SHASTA", "SIERRA", "SISKIYOU", "SOLANO",
+                                                    "ALAMEDA", "ALPINE", "SONOMA", "AMADOR",
+                                                    "STANISLAUS", "SUTTER", "BUTTE", "CALAVERAS",
+                                                    "TEHAMA", "COLUSA", "TRINITY", "TULARE",
+                                                    "CONTRA COSTA", "DEL NORTE", "TUOLUMNE",
+                                                    "VENTURA", "EL DORADO", "YOLO", "FRESNO",
+                                                    "GLENN", "YUBA", "HUMBOLDT","IMPERIAL",
+                                                    "INYO")) 
+
+view(df5)
+```
+\newpage
+#### 4. Data dictionary based on clean dataset (minimum 4 data elements), including:
+Variable name
+Data type
+Description
+```{r}
+# https://cran.r-project.org/web/packages/dataMeta/vignettes/dataMeta_Vignette.html
+library(dataMeta)
+
+data(df_ca_co_demog)
+variable.names <- c("No.", "name", "pop2012", "med_age")
+var_desc <- c("County number", "County name", 
+             "Population (2012)", "Median age")
+var_type <- c(0, 1, 0, 0)
+                          
+linker <- build_linker(my.data = df_ca_co_demog, variable_description = var_desc, variable_type = var_type)
+
+```
+\newpage
+#### 5. One or more tables with descriptive statistics for 4 data elements
+```{r}
+#install.packages("arsenal")
+library(arsenal) 
+table_one <- tableby(name ~ med_age + pop2012, data = df_ca_co_demog) 
+summary(table_one, title = "Median Age by County and Population in 2012")
+```
+## Milestone 4
+Visualizations
+Please submit an Rmd and either a knit PDF or html file via github with the following:
+1.	Three or more visualizations 
+o	One print quality table as requested in scenario
+o	One print quality plot or chart as requested in scenario
+o	One additional print quality table or plot of your choice (can support the requested data in the scenario, or answer a different question using the same data sources)
+2.	For each visual, include
+o	Code used to generate visual
+o	Legend
+o	2-3 sentence interpretation 
+o	NOTE: please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented
+3.	PDF that is professionally prepared for presentation
+o	Each part of the milestone is clearly on one page (use \newpage to push to a new page)
+o	Only the necessary information is outputted (e.g., suppressing entire data frame outputs)
+o	Use of headers and sub headers to create an organized document
+
+#### 1. Visualization 1 - table
+Include code used to generate visual, legend, 2-3 sentence interpretation. 
+Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
+
+Suggestion: Create joined table showing county, median age, and percentages of vaccinated persons.
+
+```{r}
+# Convert county names to upper case to prepare for joining by case sensitive county names
+# Key: county
+df_ca_co_demog$county = toupper(df_ca_co_demog$name)
+
+# Remove extraneous columns that won't be in final table
+# Retain population as this might be used for visualization
+df_ca_co_medage <- select(df_ca_co_demog, -c(No., name))
+
+# Reorder columns to put county name first
+df_ca_co_medage <- df_ca_co_medage %>% relocate(county, .before = pop2012)
+
+# Rework vaccination dataframe to create a mean percentage of vaccinated persons by county
+# Subset data by creating mean percentage of vacccinated persons
+df9 <- df8 %>%
+  group_by(local_health_jurisdiction)%>%
+  summarise_at(vars(vaccination_rate_percentage), list(mean_vx_prct = mean))
+view(df9)
+# First output gives mean = na if even one cell is missing data.
+# Unsure why some percentages are NA even when it seems like the data is available to calculate
+# Inf is returned if dividing by zero. 
+
+# Join tables by County
+# Can't run until second table (df_vax_ready) is available, therefore commented out for now.
+# inner_join(df_ca_co_medage, df_vax_ready, by c("county" = "local_health_jurisdiction"))
+
+```
+
+\newpage
+
+#### 2. Visualization 2 - plot or chart
+
+Include code used to generate visual, legend, 2-3 sentence interpretation. 
+Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
+
+Suggestion: Create plot showing percentages of vaccinated persons by county.
+
+```{r}
+
+```
+
+\newpage
+
+#### 3. Visualization 3 - One additional print quality table or plot of your choice
+  Can support the requested data in the scenario, or answer a different question using the same data sources. 
+  
+  Include code used to generate visual, legend, 2-3 sentence interpretation. 
+Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
+
+Suggestion: Create plot showing percentages of vaccinated persons by county's median age.
+
+```{r}
+
+```
+
+  
+\newpage
+
+#### 4. PDF professionally prepared for presentation
+
+o	Each part of the milestone is clearly on one page (use \newpage to push to a new page)
+o	Only the necessary information is outputted (e.g., suppressing entire data frame outputs)
+o	Use of headers and sub headers to create an organized document
+
+What evidence if any exists of a strong correlative relationship, and if so in what direction?
+
+```{r}
+
+```
+
+\newpage
