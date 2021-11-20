@@ -184,7 +184,7 @@ df_ca_co_demog
 
 df10 <- inner_join(df9,df_ca_co_demog,by="name")
 view(df10)
-
+write.csv(df10, "~/PHW251_Fall2021/sbym8655/data.csv",row.names=FALSE)
 ```
 \newpage
 #### 3. Clean minimum of 2 variables for analysis

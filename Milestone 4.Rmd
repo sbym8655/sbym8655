@@ -2,8 +2,40 @@
 title: "Milestone 4"
 author: "Hansang Park"
 date: "11/19/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
+
+## Milestone 4 : Visualizations
+Please submit an Rmd and either a knit PDF or html file via github with the following:
+
+1.	Three or more visualizations
+
+o	One print quality table as requested in scenario
+
+o	One print quality plot or chart as requested in scenario
+
+o	One additional print quality table or plot of your choice (can support the requested data in the scenario, or answer a different question using the same data sources)
+
+2.	For each visual, include
+
+o	Code used to generate visual
+
+o	Legend
+
+o	2-3 sentence interpretation 
+
+o	NOTE: please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented
+
+3.	PDF that is professionally prepared for presentation
+
+o	Each part of the milestone is clearly on one page (use newpage command to push to a new page)
+
+o	Only the necessary information is outputted (e.g., suppressing entire data frame outputs)
+
+o	Use of headers and sub headers to create an organized document
+
 ## Loading libraries, database, and setup for visualization
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -12,82 +44,103 @@ library(readr)
 library(lubridate)
 library(ggplot2)
 library(dplyr)
+install.packages("DT")
+library(DT)
+library(formattable)
+library(plotly)
 
-#Import statements - I will use df10 which is cleaned from project.Rmd file
-data <- df10 %>%
+#Import statements - I will use data.csv which is cleaned from milestone 3.
+data <- read_csv("data.csv")
+data <- data %>%
   rename(County=name)%>%
   rename(Mean_Vaccination_Rate_Percentage=mean_vx_prct)%>%
   rename(Population_2012=pop2012)%>%
   rename(Median_Age=med_age)
+data$Mean_Vaccination_Rate_Percentage<-round(data$Mean_Vaccination_Rate_Percentage,digits=1)
 view(data)
+
 ```
 
-## Milestone 4
-Visualizations
-Please submit an Rmd and either a knit PDF or html file via github with the following:
-1.	Three or more visualizations 
-o	One print quality table as requested in scenario
-o	One print quality plot or chart as requested in scenario
-o	One additional print quality table or plot of your choice (can support the requested data in the scenario, or answer a different question using the same data sources)
-2.	For each visual, include
-o	Code used to generate visual
-o	Legend
-o	2-3 sentence interpretation 
-o	NOTE: please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented
-3.	PDF that is professionally prepared for presentation
-o	Each part of the milestone is clearly on one page (use \newpage to push to a new page)
-o	Only the necessary information is outputted (e.g., suppressing entire data frame outputs)
-o	Use of headers and sub headers to create an organized document
+
+\newpage
 
 #### 1. Visualization 1 - table
-Include code used to generate visual, legend, 2-3 sentence interpretation. 
-Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
-
-Suggestion: Create joined table showing county, median age, and percentages of vaccinated persons.
 
 ```{r}
-
-
+datatable(data,
+          caption='Vaccination Rate as of 09/14/2021, Population, 
+          and Median Age by California County',
+          options=list(
+            pagelength=10,
+            lengthMenu=c(10,20,30,58),
+            order=list(1,'desc'),
+            columnDefs=list(
+              list(className='dt-center',targets=1:3)
+              #list(visible=FALSE, targets=3)
+            ),
+            dom='ltip'
+          ),
+          rownames=FALSE,
+          colnames=c("County","Vaccination Rate","Population","Median Age"),
+          filter="top",
+          editable=T)
 ```
+County = Name of County,
+Vaccination Rate = Percentage rounded to the nearest tenth
+Population = Number of People
+Median Age = Number rounded to the nearest tenth
+
+This is a table showing Vaccination Rate as of 09/14/2021, Population, and Median Age by California County. The highest vaccination rate is 85.2%, Marin county. The lowest vaccination rate is 25.3%, Lassen county.
+
 
 \newpage
 
 #### 2. Visualization 2 - plot or chart
 
-Include code used to generate visual, legend, 2-3 sentence interpretation. 
-Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
-
-Suggestion: Create plot showing percentages of vaccinated persons by county.
-
 ```{r}
-
+plot_ly(
+  data,
+  x=~Median_Age,
+  y=~Mean_Vaccination_Rate_Percentage,
+  color=~County,
+  type="scatter",
+  mode="markers",
+  text=~paste('County: ',County,'<br>Population: ',Population_2012)
+) %>%
+  layout(
+    title="Vaccination Rate as of 09/14/2021, California Counties",
+    yaxis=list(title="Vaccination Rate in Percentage"),
+    xaxis=list(title="Median Age of County"),
+    plot_bgcolor="azure"
+  )
 ```
+
+This is a plot of the mean vaccination rate in percentage by median age of each county's population. Each dot represents each county, and you can also check the total population of that county when you put your cursor above each bead.
 
 \newpage
 
 #### 3. Visualization 3 - One additional print quality table or plot of your choice
-  Can support the requested data in the scenario, or answer a different question using the same data sources. 
-  
-  Include code used to generate visual, legend, 2-3 sentence interpretation. 
-Please make sure visual can stand-alone, meaning it includes enough information in title, legend, and footnote so that a person who sees only the visualization could understand what is being presented.
-
-Suggestion: Create plot showing percentages of vaccinated persons by county's median age.
 
 ```{r}
 
+formattable(data, col.names=c("Name of Each County","Mean Vaccination Rate in Percentage",
+                              "Total Population of Each County in 2012",
+                              "Median Age of Each County's Population"),
+            align=c("l",rep("r",NCOL(data)-1)),
+            list(
+              'County'=formatter("span",style=~formattable::style(color="grey",font.weight="bold"))
+            ))
 ```
 
-  
+This is another table using a formattable function. Each row represents each county, and all 58 counties in California are shown. Rows are in alphabetical order.
+
 \newpage
 
 #### 4. PDF professionally prepared for presentation
 
-o	Each part of the milestone is clearly on one page (use \newpage to push to a new page)
-o	Only the necessary information is outputted (e.g., suppressing entire data frame outputs)
-o	Use of headers and sub headers to create an organized document
-
 What evidence if any exists of a strong correlative relationship, and if so in what direction?
 
+Answer: There is no correlative relationship between the median age of each county's population and the vaccination rate. As shown in the above scatter plot, there is no clear linear relationship between the x-axis and y-axis.
 ```{r}
 
 ```
