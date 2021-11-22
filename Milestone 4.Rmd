@@ -97,7 +97,7 @@ This is a table showing Vaccination Rate as of 09/14/2021, Population, and Media
 
 #### 2. Visualization 2 - plot or chart
 
-```{r}
+```{r,warning=FALSE,message=FALSE}
 plot_ly(
   data,
   x=~Median_Age,

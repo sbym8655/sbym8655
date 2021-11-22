@@ -71,8 +71,8 @@ class(cov_vax_admin$as_of_date)
 typeof(cov_vax_admin$as_of_date)
 class(cov_vax_admin$zip_code_tabulation_area)
 typeof(cov_vax_admin$zip_code_tabulation_area)
-class(cov_vax_admin$local_health_jurisdiction)
-typeof(cov_vax_admin$local_health_jurisdiction)
+class(cov_vax_admin$county)
+typeof(cov_vax_admin$county)
 class(cov_vax_admin$age12_plus_population)
 typeof(cov_vax_admin$age12_plus_population)
 # data type is "double"/numeric therefore no need to change data type
@@ -93,8 +93,8 @@ summary(cov_vax_admin$as_of_date)
 range(cov_vax_admin$as_of_date)
 summary(cov_vax_admin$zip_code_tabulation_area)
 range(cov_vax_admin$zip_code_tabulation_area)
-summary(cov_vax_admin$local_health_jurisdiction)
-range(cov_vax_admin$local_health_jurisdiction)
+summary(cov_vax_admin$county)
+range(cov_vax_admin$county)
 summary(cov_vax_admin$age12_plus_population)
 range(cov_vax_admin$age12_plus_population)
 summary(cov_vax_admin$persons_fully_vaccinated)
@@ -107,7 +107,7 @@ range(cov_vax_admin$persons_partially_vaccinated)
 ```{r}
 unique(cov_vax_admin$as_of_date)
 unique(cov_vax_admin$zip_code_tabulation_area, nmax=NA)
-unique(cov_vax_admin$local_health_jurisdiction)
+unique(cov_vax_admin$county)
 ```
 \newpage
 ## Milestone 3
@@ -119,7 +119,7 @@ unique(cov_vax_admin$local_health_jurisdiction)
 # Once we get the county average vaccination counts, put that number for the missing "NA"s, averaging rates again.
 df <- cov_vax_admin %>%
   filter(as_of_date == as.Date("2021-09-14"))%>%
-  select(zip_code_tabulation_area,local_health_jurisdiction,
+  select(zip_code_tabulation_area,county,
          age12_plus_population,persons_fully_vaccinated)
 view(df)
 ```
@@ -137,7 +137,7 @@ df2 <- df%>%
   mutate(vaccination_rate_percentage = vaccination_rate*100)
 view(df2)
 df3 <- df2 %>%
-  group_by(local_health_jurisdiction)%>%
+  group_by(county)%>%
   mutate(total_vaccinated_persons_by_county=sum(persons_fully_vaccinated,na.rm=TRUE))%>%
   mutate(total_population_by_county=sum(age12_plus_population,na.rm=TRUE))%>%
   ungroup()
@@ -145,7 +145,7 @@ df4<-df3 %>%
   mutate(persons_fully_vaccinated=if_else(is.na(persons_fully_vaccinated),age12_plus_population
         *total_vaccinated_persons_by_county/total_population_by_county,
         persons_fully_vaccinated)) %>%
-  group_by(local_health_jurisdiction)%>%
+  group_by(county)%>%
   mutate(total_vaccinated_persons_by_county=sum(persons_fully_vaccinated,na.rm=TRUE))%>%
   mutate(total_population_by_county=sum(age12_plus_population,na.rm=TRUE))%>%
   ungroup()
@@ -160,21 +160,15 @@ df6<-df5%>%
 df7 <- df6 %>%
   mutate(total_vx_rate = total_vaccinated_persons_by_county / total_population_by_county)%>%
   mutate(total_vx_rate_prcnt = total_vx_rate*100) %>%
-  arrange(df6$local_health_jurisdiction) %>%
-  drop_na(local_health_jurisdiction)%>%
+  arrange(df6$county) %>%
+  drop_na(county)%>%
   drop_na(age12_plus_population)
-unique(df7$local_health_jurisdiction)
+unique(df7$county)
 df8<-df7 %>%
-  mutate(local_health_jurisdiction=recode(local_health_jurisdiction, "BERKELEY"="ALAMEDA",
-                                          "PASADENA"="LOS ANGELES",
-                                          "LONG BEACH"="LOS ANGELES"))
-unique(df8$local_health_jurisdiction)
-view(df8)
-df9 <- df8 %>%
-  group_by(local_health_jurisdiction)%>%
+  group_by(county)%>%
   summarise_at(vars(vaccination_rate_percentage), list(mean_vx_prct = mean))%>%
-  rename(name=local_health_jurisdiction)
-view(df9)
+  rename(name=county)
+view(df8)
 # From CA demographics, extract simpler table. Convert to tibble. Show file.
 df_ca_co_demog <- select(ca_county_demographics, name, pop2012, med_age)
 df_ca_co_demog <- as_tibble(df_ca_co_demog)
@@ -182,9 +176,9 @@ df_ca_co_demog$name = toupper(df_ca_co_demog$name)
 # arrange(df_ca_co_demog$name)
 df_ca_co_demog
 
-df10 <- inner_join(df9,df_ca_co_demog,by="name")
-view(df10)
-write.csv(df10, "~/PHW251_Fall2021/sbym8655/data.csv",row.names=FALSE)
+df9 <- inner_join(df8,df_ca_co_demog,by="name")
+view(df9)
+write.csv(df9, "~/PHW251_Fall2021/sbym8655/data.csv",row.names=FALSE)
 ```
 \newpage
 #### 3. Clean minimum of 2 variables for analysis
