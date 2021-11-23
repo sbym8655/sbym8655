@@ -1,7 +1,7 @@
 ---
 title: "Milestone 4"
 author: "Hansang Park"
-date: "11/19/2021"
+date: "11/22/2021"
 output:
   html_document: default
   pdf_document: default
@@ -113,6 +113,7 @@ plot_ly(
     xaxis=list(title="Median Age of County"),
     plot_bgcolor="azure"
   )
+
 ```
 
 This is a plot of the mean vaccination rate in percentage by median age of each county's population. Each dot represents each county, and you can also check the total population of that county when you put your cursor above each bead.
