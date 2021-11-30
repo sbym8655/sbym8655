@@ -64,7 +64,7 @@ summary(cov_vax_admin)
 Ans: The datasets provide information on total potential population (demographics) and Covid vaccination (exposure to treatment).
 
 ## Identify data types for 5+ data elements/columns/variables
-as_of_date, zip_code_tabulation_area, local_health_jurisdiction, age12_plus_population,
+as_of_date, zip_code_tabulation_area, county, age12_plus_population,
 persons_fully_vaccinated, persons_partially_vaccinated
 ```{r}
 class(cov_vax_admin$as_of_date)
