@@ -8,13 +8,13 @@ output:
 
 ## Milestone 5 : Project Draft (ungraded)
 
-#1. Problem Statement
+# 1. Problem Statement
 
 Monitoring of state-level COVID-19 vaccination rates is crucial in this crisis from both individual and public health perspectives. Some experts have estimated that at least 70% of humankind would need to be vaccinated against COVID-19 to establish herd immunity. However, with the emerging new variants such as Delta forcing up cases among the unvaccinated, even causing breakthrough COVID-19 infections, the threshold for herd immunity now seems to be higher. A “California Vaccine Progress Dashboard Data” reports percentages of vaccinated persons by zip code. We have been tasked with organizing this data into county-level observations and reporting them with a print quality data visualization.
 
 There is growing concern that the counties with a young population (which is evident in the younger median age of people) are not likely to get vaccinated, resulting in a lower rate of fully vaccinated people. Our primary focus is looking for evidence of a solid correlative relationship and the direction, if any, between the total vaccination rate and median age together. Investigation being performed on a county level of observation.
 
-#2. Methods
+# 2. Methods
 
 We used a datasheet “California Vaccine Progress Dashboard Data” from 01/05/2021 to 09/14/2021 and 2012 California Census Demographics Data. We subset most recent data, zip code, county, population age plus 12, and the number of persons fully vaccinated. There is a missing value of the total population in some zip codes, but the number of people who received the vaccine exists. In this case, we substitute missing value in the total population by the number of people who received the vaccine. For missing values in vaccinated persons, mean imputation was performed in the following manner: New variable of county average vaccination rate calculated then replace missing values with population from Census times calculated average value of vaccinated persons. After mean imputation, compute the average vaccination rate again for each county by grouping. For analysis, we create one table and one plot. Our table provides detailed information regarding median age, population, and the percentage of fully vaccinated persons in each county. Our plot was designed to present each county’s median age vaccination rate simultaneously in each axis of the 2-dimensional field.
 
@@ -42,7 +42,7 @@ view(data)
 
 \newpage
 
-#3. Results
+# 3. Results
 Visualization 1-1
 
 ```{r,echo = FALSE}
@@ -92,6 +92,6 @@ This is a plot of the mean vaccination rate in percentage by median age of each 
 
 \newpage
 
-#4. Discussion
+# 4. Discussion
 
 As is evident in the visualization results, the county's population median age and vaccination rate turned out to be unrelated. This may mean that young people are not necessarily reluctant to get vaccinated, and we can say it is timely information and at the same time throws us new homework. Why is the vaccination rate lower in a particular county than in other counties? If we can find relevant causes for each county, we can deploy campaigns and strategies to promote vaccination. It's both a crisis and an opportunity. Through this analysis, we hope to contribute at least some to end the current pandemic.

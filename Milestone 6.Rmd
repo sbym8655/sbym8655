@@ -1,0 +1,102 @@
+---
+title: "Milestone 6"
+author: "Hansang Park"
+date: "12/13/2021"
+output:
+  html_document: default
+---
+
+## Milestone 6 : Final Project
+
+# 1. Problem Statement
+
+Monitoring of state-level COVID-19 vaccination rates is crucial in this crisis from both individual and public health perspectives. Some experts have estimated that at least 70% of humankind would need to be vaccinated against COVID-19 to establish herd immunity. However, with the emerging new variants such as Delta forcing up cases among the unvaccinated, even causing breakthrough COVID-19 infections, the threshold for herd immunity now seems to be higher. A “California Vaccine Progress Dashboard Data” reports percentages of vaccinated persons by zip code. We have been tasked with organizing this data into county-level observations and reporting them with a print quality data visualization.
+
+There is growing concern that the counties with a young population (which is evident in the younger median age of people) are not likely to get vaccinated, resulting in a lower rate of fully vaccinated people. Our primary focus is looking for evidence of a solid correlative relationship and the direction, if any, between the total vaccination rate and median age together. Investigation being performed on a county level of observation.
+
+# 2. Methods
+
+We used a datasheet “California Vaccine Progress Dashboard Data” from 01/05/2021 to 09/14/2021 and 2012 California Census Demographics Data. We subset most recent data, zip code, county, population age plus 12, and the number of persons fully vaccinated. There is a missing value of the total population in some zip codes, but the number of people who received the vaccine exists. In this case, we substitute missing value in the total population by the number of people who received the vaccine. For missing values in vaccinated persons, mean imputation was performed in the following manner: New variable of county average vaccination rate calculated then replace missing values with population from Census times calculated average value of vaccinated persons. After mean imputation, compute the average vaccination rate again for each county by grouping. For analysis, we create one table and one plot. Our table provides detailed information regarding median age, population, and the percentage of fully vaccinated persons in each county. Our plot was designed to present each county’s median age vaccination rate simultaneously in each axis of the 2-dimensional field.
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+install.packages("DT")
+library(tidyverse)
+library(lubridate)
+library(DT)
+library(formattable)
+library(plotly)
+
+#Import statements - data.csv which is cleaned from Milestone 3.
+data <- read_csv("data.csv")
+data <- data %>%
+  rename(County=name)%>%
+  rename(Mean_Vaccination_Rate_Percentage=mean_vx_prct)%>%
+  rename(Population_2012=pop2012)%>%
+  rename(Median_Age=med_age)
+data$Mean_Vaccination_Rate_Percentage<-round(data$Mean_Vaccination_Rate_Percentage,digits=1)
+view(data)
+
+```
+
+
+\newpage
+
+# 3. Results
+Visualization 1-1
+
+```{r,echo = FALSE}
+datatable(data,
+          caption='Vaccination Rate as of 09/14/2021, Population, and Median Age by California County',
+          options=list(
+            pagelength=10,
+            lengthMenu=c(10,20,30,58),
+            order=list(1,'desc'),
+            columnDefs=list(
+              list(className='dt-center',targets=1:3)
+              #list(visible=FALSE, targets=3)
+            ),
+            dom='ltip'
+          ),
+          rownames=FALSE,
+          colnames=c("County","Vaccination Rate","Population","Median Age"),
+          filter="top",
+          editable=T)
+```
+This table shows the rate of fully vaccinated persons as of 09/14/2021, total population, and the median age of population by each 58 of California County. The County column is consists of the name of each county in California. Vaccination Rate column's each value means the percentage of persons fully vaccinated in each county (Rounded to the nearest tenth). The population column is the total population in each county (Source: 2012 Census Demographics Data). The median age of each county is adopted from 2012 Census Demographics Data (Rounded to the nearest tenth). The highest vaccination rate is 85.2% in Marin County, and the lowest is 25.3%, Lassen County.
+
+
+\newpage
+
+Visualization 1-2
+
+```{r,warning=FALSE,message=FALSE,echo = FALSE}
+t1 <- list(
+  family = "Courier New",
+  size = 13,
+  color = "blue")
+
+plot_ly(
+  data,
+  x=~Median_Age,
+  y=~Mean_Vaccination_Rate_Percentage,
+  color=~County,
+  type="scatter",
+  mode="markers",
+  text=~paste('County: ',County,'<br>Population: ',Population_2012)
+) %>%
+  layout(
+    title=list(text="Vaccination Rate as of 09/14/2021, Population, and Median Age by California County",
+               font=t1),font=t1,
+    yaxis=list(title="Vaccination Rate in Percentage"),
+    xaxis=list(title="Median Age of County"),
+    plot_bgcolor="azure"
+  )
+```
+This is a plot of the mean vaccination rate in percentage by median age of each county's population. Each dot represents each county, and you can also check the total population of that county when you put your cursor above each bead. There is no correlative relationship between the median age of each county's people and the vaccination rate. As shown in the above scatter plot, there is no clear linear relationship between the x-axis and y-axis.
+
+\newpage
+
+# 4. Discussion
+
+As is evident in the visualization results, the county's population median age and vaccination rate turned out to be unrelated. This may mean that young people are not necessarily reluctant to get vaccinated, and we can say it is timely information and at the same time throws us new homework. Why is the vaccination rate lower in a particular county than in other counties? If we can find relevant causes for each county, we can deploy campaigns and strategies to promote vaccination. It's both a crisis and an opportunity. Through this analysis, we hope to contribute at least some to end the current pandemic.
